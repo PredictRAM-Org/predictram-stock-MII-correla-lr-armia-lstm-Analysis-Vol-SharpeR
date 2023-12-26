@@ -37,13 +37,13 @@ def predict_future_lstm(last_observed_price, model, min_max_scaler, num_steps=1)
 
     return min_max_scaler.inverse_transform(np.array(predicted_prices).reshape(1, -1))[0]
 
-# Load IIP data
-IIP_data = pd.read_excel("IIP.xlsx")
-IIP_data['Date'] = pd.to_datetime(IIP_data['Date'])
-IIP_data.set_index('Date', inplace=True)
+# Load MII data
+MII_data = pd.read_excel("MII.xlsx")
+MII_data['Date'] = pd.to_datetime(MII_data['Date'])
+MII_data.set_index('Date', inplace=True)
 
 # Streamlit UI
-st.title("Stock-IIP Correlation Analysis with Expected Inflation, Price Prediction, and Sentiment Analysis")
+st.title("Stock-MII Correlation Analysis with Expected Inflation, Price Prediction, and Sentiment Analysis")
 
 # User input for uploading Excel file with stocks name column
 uploaded_file = st.file_uploader("Upload Excel file with stocks name column", type=["xlsx", "xls"])
@@ -67,15 +67,15 @@ elif data_range == "3 years":
 else:
     start_date = end_date - pd.DateOffset(years=5)
 
-# Filter IIP data
-filtered_IIP_data = IIP_data.loc[start_date:end_date]
+# Filter MII data
+filtered_MII_data = MII_data.loc[start_date:end_date]
 
-# User input for expected IIP inflation
-expected_inflation = st.number_input("Enter Expected Upcoming IIP Inflation:", min_value=0.0, step=0.01)
+# User input for expected MII inflation
+expected_inflation = st.number_input("Enter Expected Upcoming MII Inflation:", min_value=0.0, step=0.01)
 
 # Train models
 if st.button("Train Models"):
-    st.write(f"Training models with data range: {data_range}, expected IIP inflation: {expected_inflation}...")
+    st.write(f"Training models with data range: {data_range}, expected MII inflation: {expected_inflation}...")
 
     correlations = []
     future_prices_lr_list = []
@@ -97,30 +97,30 @@ if st.button("Train Models"):
             selected_stock_data.set_index('Date', inplace=True)
             filtered_stock_data = selected_stock_data.loc[start_date:end_date]
 
-            # Merge stock and IIP data on Date
-            merged_data = pd.merge(filtered_stock_data, filtered_IIP_data, left_index=True, right_index=True, how='inner')
+            # Merge stock and MII data on Date
+            merged_data = pd.merge(filtered_stock_data, filtered_MII_data, left_index=True, right_index=True, how='inner')
 
-            # Handle NaN values in IIP column
-            if merged_data['IIP'].isnull().any():
-                st.write(f"Warning: NaN values found in 'IIP' column for {stock_name}. Dropping NaN values.")
-                merged_data = merged_data.dropna(subset=['IIP'])
+            # Handle NaN values in MII column
+            if merged_data['MII'].isnull().any():
+                st.write(f"Warning: NaN values found in 'MII' column for {stock_name}. Dropping NaN values.")
+                merged_data = merged_data.dropna(subset=['MII'])
 
-            # Calculate IIP change
-            merged_data['IIP Change'] = merged_data['IIP'].pct_change()
+            # Calculate MII change
+            merged_data['MII Change'] = merged_data['MII'].pct_change()
 
             # Drop NaN values after calculating percentage change
             merged_data = merged_data.dropna()
 
-            # Show correlation between 'Close' column and 'IIP Change'
-            correlation_close_IIP = merged_data['Close'].corr(merged_data['IIP Change'])
-            correlation_actual = merged_data['Close'].corr(merged_data['IIP'])
+            # Show correlation between 'Close' column and 'MII Change'
+            correlation_close_MII = merged_data['Close'].corr(merged_data['MII Change'])
+            correlation_actual = merged_data['Close'].corr(merged_data['MII'])
 
-            st.write(f"Correlation between 'Close' and 'IIP Change' for {stock_name}: {correlation_close_IIP}")
-            st.write(f"Actual Correlation between 'Close' and 'IIP' for {stock_name}: {correlation_actual}")
+            st.write(f"Correlation between 'Close' and 'MII Change' for {stock_name}: {correlation_close_MII}")
+            st.write(f"Actual Correlation between 'Close' and 'MII' for {stock_name}: {correlation_actual}")
 
             # Train Linear Regression model
             model_lr = LinearRegression()
-            X_lr = merged_data[['IIP']]
+            X_lr = merged_data[['MII']]
             y_lr = merged_data['Close']
             model_lr.fit(X_lr, y_lr)
 
@@ -168,7 +168,7 @@ if st.button("Train Models"):
             st.write(f"Volatility for {stock_name}: {annualized_volatility}")
             st.write(f"Sharpe Ratio for {stock_name}: {sharpe_ratio}")
 
-            correlations.append(correlation_close_IIP)
+            correlations.append(correlation_close_MII)
             future_prices_lr_list.append(future_prices_lr[0])
             future_prices_arima_list.append(future_prices_arima)
             latest_actual_prices.append(latest_actual_price)
@@ -180,7 +180,7 @@ if st.button("Train Models"):
     # Create a DataFrame for results
     results_data = {
         'Stock': stock_names,
-        'Correlation with IIP Change': correlations,
+        'Correlation with MII Change': correlations,
         'Predicted Price Change (Linear Regression)': future_prices_lr_list,
         'Predicted Price Change (ARIMA)': future_prices_arima_list,
         'Latest Actual Price': latest_actual_prices,
@@ -192,7 +192,7 @@ if st.button("Train Models"):
 
     # Display results in descending order of correlation
     st.write("\nResults Sorted by Correlation:")
-    sorted_results_df = results_df.sort_values(by='Correlation with IIP Change', ascending=False)
+    sorted_results_df = results_df.sort_values(by='Correlation with MII Change', ascending=False)
     st.table(sorted_results_df)
 
   # Add a download link for the sorted results
