@@ -43,10 +43,8 @@ MII_data['Date'] = pd.to_datetime(MII_data['Date'])
 MII_data.set_index('Date', inplace=True)
 
 # Streamlit UI
-# Add a logo to the top header
-    st.image("png_2.3-removebg-preview.png", width=400)  # Replace "your_logo.png" with the path to your logo
-
 st.title("Stock-MII Correlation Analysis with Expected Inflation, Price Prediction, and Sentiment Analysis")
+st.image("png_2.3-removebg-preview.png", width=400)  # Replace "your_logo.png" with the path to your logo
 
 # User input for uploading Excel file with stocks name column
 uploaded_file = st.file_uploader("Upload Excel file with stocks name column", type=["xlsx", "xls"])
